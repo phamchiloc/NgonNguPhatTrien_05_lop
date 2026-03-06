@@ -137,7 +137,7 @@ function displayUsers(users) {
                         <span>🔓</span> Enable
                       </button>`
                 }
-                <button class="btn btn-info" onclick="editUser('${user._id}', '${user.fullName || ''}')">
+                <button class="btn btn-info" onclick="showEditUserForm('${user._id}')">
                     <span>✏️</span> Edit
                 </button>
                 <button class="btn btn-danger" onclick="confirmDeleteUser('${user._id}', '${user.username}')">
@@ -190,6 +190,88 @@ function showAddUserForm() {
 function hideAddUserForm() {
     document.getElementById('add-user-form').style.display = 'none';
     document.querySelector('#add-user-form form').reset();
+}
+
+function showEditUserForm(userId) {
+    const user = allUsers.find(u => u._id === userId);
+    if (!user) {
+        showToast('Không tìm thấy user!', 'error');
+        return;
+    }
+    
+    // Fill form with current data
+    document.getElementById('edit-user-id').value = user._id;
+    document.getElementById('edit-user-username').value = user.username;
+    document.getElementById('edit-user-email').value = user.email;
+    document.getElementById('edit-user-password').value = '';
+    document.getElementById('edit-user-fullname').value = user.fullName || '';
+    document.getElementById('edit-user-avatar').value = user.avatarUrl || '';
+    document.getElementById('edit-user-role').value = user.role ? user.role._id : '';
+    document.getElementById('edit-user-logincount').value = user.loginCount || 0;
+    document.getElementById('edit-user-status').checked = user.status;
+    
+    // Load roles for select if not loaded
+    loadRolesForEditSelect();
+    
+    document.getElementById('edit-user-form').style.display = 'flex';
+}
+
+function hideEditUserForm() {
+    document.getElementById('edit-user-form').style.display = 'none';
+    document.querySelector('#edit-user-form form').reset();
+}
+
+async function loadRolesForEditSelect() {
+    try {
+        const response = await fetch(`${API_URL}/roles`);
+        const roles = await response.json();
+        
+        const select = document.getElementById('edit-user-role');
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">-- Chọn Role --</option>' +
+            roles.map(role => `<option value="${role._id}">${role.name}</option>`).join('');
+        select.value = currentValue;
+    } catch (error) {
+        console.error('Error loading roles for edit:', error);
+    }
+}
+
+async function updateUser(event) {
+    event.preventDefault();
+    
+    const userId = document.getElementById('edit-user-id').value;
+    const userData = {
+        fullName: document.getElementById('edit-user-fullname').value,
+        avatarUrl: document.getElementById('edit-user-avatar').value,
+        role: document.getElementById('edit-user-role').value,
+        loginCount: parseInt(document.getElementById('edit-user-logincount').value) || 0,
+        status: document.getElementById('edit-user-status').checked
+    };
+    
+    // Add password if provided
+    const password = document.getElementById('edit-user-password').value;
+    if (password) {
+        userData.password = password;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        
+        if (response.ok) {
+            showToast('Cập nhật user thành công!', 'success');
+            hideEditUserForm();
+            loadUsers();
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Không thể cập nhật!', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi: ' + error.message, 'error');
+    }
 }
 
 async function addUser(event) {
@@ -296,28 +378,6 @@ async function deleteUser(id, username) {
     }
 }
 
-async function editUser(id, currentName) {
-    const newName = prompt('Nhập tên mới:', currentName);
-    if (!newName || newName === currentName) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/users/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fullName: newName })
-        });
-        
-        if (response.ok) {
-            showToast('Cập nhật thành công!', 'success');
-            loadUsers();
-        } else {
-            showToast('Không thể cập nhật!', 'error');
-        }
-    } catch (error) {
-        showToast('Lỗi: ' + error.message, 'error');
-    }
-}
-
 // ============== ROLES FUNCTIONS ==============
 
 async function loadRoles() {
@@ -365,7 +425,7 @@ function displayRoles(roles) {
                 <p><strong>📅 Created:</strong> ${new Date(role.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             <div class="card-actions">
-                <button class="btn btn-info" onclick="editRole('${role._id}', '${(role.description || '').replace(/'/g, "\\'")}')">
+                <button class="btn btn-info" onclick="showEditRoleForm('${role._id}')">
                     <span>✏️</span> Edit
                 </button>
                 <button class="btn btn-danger" onclick="confirmDeleteRole('${role._id}', '${role.name}')">
@@ -427,6 +487,57 @@ function hideAddRoleForm() {
     document.querySelector('#add-role-form form').reset();
 }
 
+function showEditRoleForm(roleId) {
+    const role = allRoles.find(r => r._id === roleId);
+    if (!role) {
+        showToast('Không tìm thấy role!', 'error');
+        return;
+    }
+    
+    // Fill form with current data
+    document.getElementById('edit-role-id').value = role._id;
+    document.getElementById('edit-role-name').value = role.name;
+    document.getElementById('edit-role-description').value = role.description || '';
+    
+    document.getElementById('edit-role-form').style.display = 'flex';
+}
+
+function hideEditRoleForm() {
+    document.getElementById('edit-role-form').style.display = 'none';
+    document.querySelector('#edit-role-form form').reset();
+}
+
+async function updateRole(event) {
+    event.preventDefault();
+    
+    const roleId = document.getElementById('edit-role-id').value;
+    const roleData = {
+        name: document.getElementById('edit-role-name').value,
+        description: document.getElementById('edit-role-description').value
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}/roles/${roleId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(roleData)
+        });
+        
+        if (response.ok) {
+            showToast('Cập nhật role thành công!', 'success');
+            hideEditRoleForm();
+            loadRoles();
+            loadRolesForSelect();
+            loadRoleFilter();
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Không thể cập nhật!', 'error');
+        }
+    } catch (error) {
+        showToast('Lỗi: ' + error.message, 'error');
+    }
+}
+
 async function addRole(event) {
     event.preventDefault();
     
@@ -451,28 +562,6 @@ async function addRole(event) {
         } else {
             const error = await response.json();
             showToast(error.message, 'error');
-        }
-    } catch (error) {
-        showToast('Lỗi: ' + error.message, 'error');
-    }
-}
-
-async function editRole(id, currentDescription) {
-    const newDescription = prompt('Nhập mô tả mới:', currentDescription);
-    if (newDescription === null) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/roles/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ description: newDescription })
-        });
-        
-        if (response.ok) {
-            showToast('Cập nhật thành công!', 'success');
-            loadRoles();
-        } else {
-            showToast('Không thể cập nhật!', 'error');
         }
     } catch (error) {
         showToast('Lỗi: ' + error.message, 'error');

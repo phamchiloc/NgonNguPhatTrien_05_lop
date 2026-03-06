@@ -63,6 +63,16 @@ router.put('/:id', function (req, res, next) {
   try {
     let index = mockData.roles.findIndex(r => r._id === req.params.id);
     if (index !== -1) {
+      // Check if new name conflicts with existing role
+      if (req.body.name && req.body.name !== mockData.roles[index].name) {
+        let nameExists = mockData.roles.find(r => r.name === req.body.name && r._id !== req.params.id);
+        if (nameExists) {
+          return res.status(400).send({
+            message: "Role name already exists"
+          });
+        }
+      }
+      
       mockData.roles[index] = {
         ...mockData.roles[index],
         ...req.body,

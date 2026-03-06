@@ -91,6 +91,15 @@ router.put('/:id', function (req, res, next) {
   try {
     let index = mockData.users.findIndex(u => u._id === req.params.id);
     if (index !== -1) {
+      // Don't allow changing username or email
+      delete req.body.username;
+      delete req.body.email;
+      
+      // Handle role update - convert roleId to role
+      if (req.body.role) {
+        // Keep the role as is (it's a string ID)
+      }
+      
       mockData.users[index] = {
         ...mockData.users[index],
         ...req.body,
