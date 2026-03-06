@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User & Role Management System</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body>
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
+
+    <div class="container">
+        <header>
+            <h1>🎯 User & Role Management</h1>
+            <p class="subtitle">Hệ thống quản lý người dùng và vai trò</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('users')">
+                <span class="tab-icon">👥</span>
+                <span class="tab-text">Users</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('roles')">
+                <span class="tab-icon">🔐</span>
+                <span class="tab-text">Roles</span>
+            </button>
+        </div>
+
+        <!-- USERS TAB -->
+        <div id="users-tab" class="tab-content active">
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <h2>👥 Danh sách Users</h2>
+                        <p class="section-subtitle" id="users-count">Đang tải...</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddUserForm()">
+                        <span class="btn-icon">➕</span> Thêm User
+                    </button>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="user-search" placeholder="Tìm kiếm user..." onkeyup="filterUsers()">
+                    </div>
+                    <div class="filter-group">
+                        <select id="user-status-filter" onchange="filterUsers()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="active">✓ Active</option>
+                            <option value="inactive">✗ Inactive</option>
+                        </select>
+                        <select id="user-role-filter" onchange="filterUsers()">
+                            <option value="">Tất cả roles</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="resetFilters()">
+                            <span>🔄</span> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div id="users-list" class="data-list"></div>
+            </div>
+
+            <!-- Add User Form -->
+            <div id="add-user-form" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>➕ Thêm User Mới</h3>
+                        <span class="close" onclick="hideAddUserForm()">&times;</span>
+                    </div>
+                    <form onsubmit="addUser(event)">
+                        <div class="form-group">
+                            <label for="user-username">👤 Username <span class="required">*</span></label>
+                            <input type="text" id="user-username" placeholder="Nhập username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-password">🔒 Password <span class="required">*</span></label>
+                            <input type="password" id="user-password" placeholder="Nhập password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-email">📧 Email <span class="required">*</span></label>
+                            <input type="email" id="user-email" placeholder="Nhập email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-fullname">✏️ Full Name</label>
+                            <input type="text" id="user-fullname" placeholder="Nhập họ tên đầy đủ">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-avatar">🖼️ Avatar URL</label>
+                            <input type="text" id="user-avatar" placeholder="https://example.com/avatar.jpg">
+                        </div>
+                        <div class="form-group">
+                            <label for="user-role">🔐 Role</label>
+                            <select id="user-role">
+                                <option value="">-- Chọn Role --</option>
+                            </select>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="user-status">
+                                <span>✓ Kích hoạt ngay</span>
+                            </label>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddUserForm()">Hủy</button>
+                            <button type="submit" class="btn btn-success">💾 Lưu User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROLES TAB -->
+        <div id="roles-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <div>
+                        <h2>🔐 Danh sách Roles</h2>
+                        <p class="section-subtitle" id="roles-count">Đang tải...</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showAddRoleForm()">
+                        <span class="btn-icon">➕</span> Thêm Role
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="toolbar">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="role-search" placeholder="Tìm kiếm role..." onkeyup="filterRoles()">
+                    </div>
+                </div>
+
+                <div id="roles-list" class="data-list"></div>
+            </div>
+
+            <!-- Add Role Form -->
+            <div id="add-role-form" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>➕ Thêm Role Mới</h3>
+                        <span class="close" onclick="hideAddRoleForm()">&times;</span>
+                    </div>
+                    <form onsubmit="addRole(event)">
+                        <div class="form-group">
+                            <label for="role-name">🔐 Role Name <span class="required">*</span></label>
+                            <input type="text" id="role-name" placeholder="Nhập tên role" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="role-description">📝 Description</label>
+                            <textarea id="role-description" placeholder="Nhập mô tả về role này..."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="hideAddRoleForm()">Hủy</button>
+                            <button type="submit" class="btn btn-success">💾 Lưu Role</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="modal" style="display: none;">
+            <div class="modal-content confirm-modal">
+                <div class="confirm-icon">⚠️</div>
+                <h3 id="confirm-title">Xác nhận</h3>
+                <p id="confirm-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="hideConfirmModal()">Hủy</button>
+                    <button class="btn btn-danger" id="confirm-btn">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/javascripts/app.js"></script>
+</body>
+</html>
